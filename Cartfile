@@ -1,3 +1,5 @@
+
 github "pukapp/wire-ios-protos" "mergewire"
 github "pukapp/wire-ios-transport" "mergewire"
+
 github "wireapp/wire-ios-cryptobox" ~> 19.0
