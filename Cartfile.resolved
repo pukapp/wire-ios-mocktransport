@@ -1,9 +1,1 @@
-github "pukapp/wire-ios-protos" "8b37d53f5a9d9fd16940f7a1d270984062b2feb1"
-github "pukapp/wire-ios-transport" "67b7a0e4ec8649c8286a071f01c7b9beab5a7a6e"
-github "pukapp/wire-ios-utilities" "d6aafe84d5984ce4aadc6819ca80be88d8d168dc"
-github "wireapp/ocmock" "v3.4.3"
-github "wireapp/protobuf-objc" "1.9.14"
-github "wireapp/swift-protobuf" "1.5.0"
-github "wireapp/wire-ios-cryptobox" "19.0.0"
-github "wireapp/wire-ios-system" "28.0.0"
-github "wireapp/wire-ios-testing" "20.0.0"
+

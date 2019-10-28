@@ -22,6 +22,7 @@ extension ZMTransportResponse {
     static let teamNotFound = ZMTransportResponse(payload: ["label" : "no-team"] as ZMTransportData, httpStatus: 404, transportSessionError: nil)
     static let notTeamMember = ZMTransportResponse(payload: ["label" : "no-team-member"] as ZMTransportData, httpStatus: 403, transportSessionError: nil)
     static let operationDenied = ZMTransportResponse(payload: ["label" : "operation-denied"] as ZMTransportData, httpStatus: 403, transportSessionError: nil)
+    static let conversationNotFound = ZMTransportResponse(payload: ["label" : "no-convo"] as ZMTransportData, httpStatus: 404, transportSessionError: nil)
 }
 
 extension MockTransportSession {
@@ -34,6 +35,8 @@ extension MockTransportSession {
             response = fetchAllTeams(query: request.queryParameters)
         case "/teams/*":
             response = fetchTeam(with: request.RESTComponents(index: 1))
+        case "/teams/*/conversations/*" where request.method == .methodDELETE:
+            response = deleteTeamConversation(teamId: request.RESTComponents(index: 1), conversationId: request.RESTComponents(index: 3))
         case "/teams/*/services/whitelisted":
             response = fetchWhitelistedServicesForTeam(with: request.RESTComponents(index: 1), query: request.queryParameters)
         case "/teams/*/invitations":
@@ -105,6 +108,28 @@ extension MockTransportSession {
         return (Array(paginatedTeams), hasMore)
     }
     
+    private func deleteTeamConversation(teamId: String?, conversationId: String?) -> ZMTransportResponse? {
+        guard let teamId = teamId, let conversationId = conversationId  else { return nil }
+        
+        let predicate = MockTeam.predicateWithIdentifier(identifier: teamId)
+        
+        guard let team: MockTeam = MockTeam.fetch(in: managedObjectContext, withPredicate: predicate) else {
+            return .notTeamMember
+        }
+
+        guard let selfTeams = selfUser.memberships, !selfTeams.union(team.members).isEmpty else {
+            return .notTeamMember
+        }
+        
+        guard let conversation = fetchConversation(with: conversationId) else {
+            return .conversationNotFound
+        }
+        
+        managedObjectContext.delete(conversation)
+        
+        return ZMTransportResponse(payload: nil, httpStatus: 200, transportSessionError: nil)
+    }
+    
     private func sendTeamInvitation(with identifier: String?) -> ZMTransportResponse? {
         guard let identifier = identifier else { return nil }
         let predicate = MockTeam.predicateWithIdentifier(identifier: identifier)
@@ -170,7 +195,7 @@ extension MockTransportSession {
 
         // 3) Check the password
         guard let password = payload?.asDictionary()?["password"] as? String, password == member.user.password else {
-            return errorResponse(withCode: 409, reason: "missing-auth")
+            return errorResponse(withCode: 403, reason: "access-denied")
         }
 
         // 4) Check the legal hold state of the team and user
@@ -210,10 +235,10 @@ extension MockTransportSession {
 
     private func pushEventForPendingLegalHoldDevice(_ device: MockPendingLegalHoldClient) -> MockPushEvent {
         let payload: NSDictionary = [
-            "type": "user.client-legal-hold-request",
+            "id": device.user!.identifier,
+            "type": "user.legalhold-request",
             "requester": UUID().transportString(),
-            "target_user": device.user!.identifier,
-            "client_id": device.identifier!,
+            "client": ["id": device.identifier!],
             "last_prekey": [
                 "id": device.lastPrekey.identifier,
                 "key": device.lastPrekey.value
