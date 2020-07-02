@@ -1,0 +1,8 @@
+github "pukapp/wire-ios-cryptobox" "305deaa3f6b940cf39da21f72e83b4396a042485"
+github "pukapp/wire-ios-protos" "ecb57b02261f65b885f565c8e482153aa78fc77b"
+github "pukapp/wire-ios-transport" "574277ecb452467a428253783798b6ea95525994"
+github "pukapp/wire-ios-utilities" "72d4f50c02e31b447b9484fb5e5d55290d835ab6"
+github "wireapp/ocmock" "v3.4.3"
+github "wireapp/swift-protobuf" "1.8.0_Swift5.2.2"
+github "wireapp/wire-ios-system" "31.0.1"
+github "wireapp/wire-ios-testing" "22.0.0"
