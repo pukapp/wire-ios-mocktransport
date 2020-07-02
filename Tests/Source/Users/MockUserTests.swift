@@ -20,12 +20,28 @@ import Foundation
 @testable import WireMockTransport
 
 class MockUserTests: MockTransportSessionTests {
+    
+    var team: MockTeam!
+    var selfUser: MockUser!
+    var conversation: MockConversation!
+    
+    override func setUp() {
+        super.setUp()
+        sut.performRemoteChanges { session in
+            self.selfUser = session.insertSelfUser(withName: "me")
+            self.team = session.insertTeam(withName: "A Team", isBound: true)
+            self.conversation = session.insertTeamConversation(to: self.team, with: [session.insertUser(withName: "some")], creator: self.selfUser)
+            
+        }
+        XCTAssert(self.waitForAllGroupsToBeEmpty(withTimeout: 0.5))
+    }
+
     func testImageAccessorsReturnsCorrectImages() {
         // GIVEN
         let user = sut.insertUser(withName: "some")
         
         // WHEN
-        var pictures = sut.addProfilePicture(to: user)
+        let pictures = sut.addProfilePicture(to: user)
         
         // THEN
         XCTAssertEqual(user.mediumImage, pictures["medium"])
@@ -39,7 +55,7 @@ class MockUserTests: MockTransportSessionTests {
         let user = sut.insertUser(withName: "some")
         
         // WHEN
-        var pictures = sut.addV3ProfilePicture(to: user)
+        let pictures = sut.addV3ProfilePicture(to: user)
 
         // THEN
         XCTAssertEqual(user.previewProfileAssetIdentifier, pictures["preview"]?.identifier)

@@ -133,6 +133,7 @@ static NSString* ZMLogTag ZM_UNUSED = @"MockTransportRequests";
         self.reachability = [[MockReachability alloc] init];
         self.pushTokens = [NSMutableDictionary dictionary];
         _nonCompletedRequests = [NSMutableArray array];
+        [MockRole createConversationRolesWithContext:self.managedObjectContext];
     }
     return self;
 }
@@ -707,6 +708,11 @@ static NSString* ZMLogTag ZM_UNUSED = @"MockTransportRequests";
 - (MockConversation *)insertConversationWithSelfUser:(MockUser *)selfUser creator:(MockUser *)creator otherUsers:(NSArray *)otherUsers type:(ZMTConversationType)conversationType;
 {
     return [MockConversation insertConversationIntoContext:self.managedObjectContext withSelfUser:selfUser creator:creator otherUsers:otherUsers type:conversationType];
+}
+
+- (MockConversation *)insertConversationWithSelfUserAndGroupRoles:(MockUser *)selfUser otherUsers:(NSArray *)otherUsers;
+{
+    return [MockConversation insertConversationWithRolesIntoContext:self.managedObjectContext withCreator:selfUser otherUsers:otherUsers ];
 }
 
 - (MockConversation *)insertConversationWithCreator:(MockUser *)creator otherUsers:(NSArray *)otherUsers type:(ZMTConversationType)conversationType;

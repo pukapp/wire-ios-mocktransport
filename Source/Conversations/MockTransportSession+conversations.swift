@@ -17,6 +17,7 @@
 //
 
 import Foundation
+import WireProtos
 
 extension MockTransportSession {
 
@@ -99,6 +100,19 @@ extension MockTransportSession {
                                              "code": "test-code"] as ZMTransportData, httpStatus: 200, transportSessionError: nil)
     }
     
+    @objc(processFetchRolesForConversation:payload:)
+    public func processFetchRoles(for conversationId: String, payload: [String: AnyHashable]) -> ZMTransportResponse {
+        guard let conversation = fetchConversation(with: conversationId) else {
+            return ZMTransportResponse(payload: nil, httpStatus: 404, transportSessionError: nil)
+        }
+        
+        let roles = conversation.team?.roles ?? conversation.nonTeamRoles!
+        let payload: [String : Any] = [
+            "conversation_roles" : roles.map { $0.payload }
+        ]
+        return ZMTransportResponse(payload: payload as ZMTransportData, httpStatus: 200, transportSessionError: nil)
+    }
+    
     @objc(processCreateLinkForConversation:payload:)
     public func processCreateLink(for conversationId: String, payload: [String: AnyHashable]) -> ZMTransportResponse {
         guard let conversation = fetchConversation(with: conversationId) else {
@@ -156,5 +170,47 @@ extension MockTransportSession {
         else {
             return ZMTransportResponse(payload: nil, httpStatus: 403, transportSessionError: nil)
         }
+    }
+    
+    @objc
+    public func processAddOTRMessage(toConversation conversationID: String,
+                                     withProtobuffData data: Data,
+                                     query: [String: Any]) -> ZMTransportResponse {
+        guard
+            let conversation = fetchConversation(with: conversationID),
+            let otrMetaData = try? NewOtrMessage(serializedData: data),
+            let senderClient = otrMessageSender(fromClientId: otrMetaData.sender) else {
+                return ZMTransportResponse(payload: nil, httpStatus: 404, transportSessionError: nil)
+        }
+        
+        var onlyForUser = query["report_missing"] as? String
+        if otrMetaData.reportMissing.count > 0, let userId = otrMetaData.reportMissing.first {
+            onlyForUser = UUID(data: userId.uuid)?.transportString()
+        }
+        
+        let missedClients = self.missedClients(fromRecipients: otrMetaData.recipients, conversation: conversation, sender: senderClient, onlyForUserId: onlyForUser)
+        let deletedClients = self.deletedClients(fromRecipients: otrMetaData.recipients, conversation: conversation)
+        
+        let payload: [String: Any] = [
+            "missing": missedClients,
+            "deleted": deletedClients,
+            "time": Date().transportString()
+        ]
+        
+        var statusCode = 412
+        if missedClients.isEmpty {
+            statusCode = 201
+            insertOTRMessageEvents(
+                toConversation: conversation,
+                recipients: otrMetaData.recipients,
+                senderClient: senderClient,
+                createEventBlock: { recipient, messageData, decryptedData in
+                    let event = conversation.insertOTRMessage(from: senderClient, to: recipient, data: messageData)
+                    event.decryptedOTRData = decryptedData
+                    return event
+                })
+        }
+        
+        return ZMTransportResponse(payload: payload as ZMTransportData, httpStatus: statusCode, transportSessionError: nil)
     }
 }

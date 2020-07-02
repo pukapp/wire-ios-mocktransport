@@ -37,6 +37,8 @@ extension MockTransportSession {
             response = fetchTeam(with: request.RESTComponents(index: 1))
         case "/teams/*/conversations/*" where request.method == .methodDELETE:
             response = deleteTeamConversation(teamId: request.RESTComponents(index: 1), conversationId: request.RESTComponents(index: 3))
+        case "/teams/*/conversations/roles"/* where request.method == .methodGET*/:
+            response = fetchRolesForTeam(with: request.RESTComponents(index: 1))
         case "/teams/*/services/whitelisted":
             response = fetchWhitelistedServicesForTeam(with: request.RESTComponents(index: 1), query: request.queryParameters)
         case "/teams/*/invitations":
@@ -45,6 +47,10 @@ extension MockTransportSession {
             response = fetchMembersForTeam(with: request.RESTComponents(index: 1))
         case "/teams/*/members/*":
             response = fetchMemberForTeam(withTeamId: request.RESTComponents(index: 1), userId: request.RESTComponents(index: 3))
+        case "/teams/*/get-members-by-ids-using-post" where request.method == .methodPOST:
+            let payload = request.payload?.asDictionary()
+            let userIDs = payload?["user_ids"] as? [String]
+            response = fetchMembersForTeam(with: request.RESTComponents(index: 1), userIds: userIDs)
         case "/teams/*/legalhold/*/approve":
             response = approveUserLegalHold(inTeam: request.RESTComponents(index: 1), forUser: request.RESTComponents(index: 3), payload: request.payload, method: request.method)
         default:
@@ -143,18 +149,48 @@ extension MockTransportSession {
         return ZMTransportResponse(payload: nil, httpStatus: 201, transportSessionError: nil)
     }
     
-    private func fetchMembersForTeam(with identifier: String?) -> ZMTransportResponse? {
-        guard let identifier = identifier else { return nil }
-        let predicate = MockTeam.predicateWithIdentifier(identifier: identifier)
+    private func fetchMembersForTeam(with teamId: String?) -> ZMTransportResponse? {
+        guard let teamId = teamId else { return nil }
+        let predicate = MockTeam.predicateWithIdentifier(identifier: teamId)
         guard let team: MockTeam = MockTeam.fetch(in: managedObjectContext, withPredicate: predicate) else { return .teamNotFound }
         if let permissionError = ensurePermission(.getMemberPermissions, in: team) {
             return permissionError
         }
         
         let payload: [String : Any] = [
-            "members" : team.members.map { $0.payload }
+            "members" : team.members.map { $0.payload },
+            "hasMore" : false
         ]
 
+        return ZMTransportResponse(payload: payload as ZMTransportData, httpStatus: 200, transportSessionError: nil)
+    }
+    
+    private func fetchMembersForTeam(with teamId: String?, userIds: [String]?) -> ZMTransportResponse? {
+        guard let teamId = teamId, let userIds = userIds else { return nil }
+        let predicate = MockTeam.predicateWithIdentifier(identifier: teamId)
+        guard let team: MockTeam = MockTeam.fetch(in: managedObjectContext, withPredicate: predicate) else { return .teamNotFound }
+        let members = team.members.filter({ userIds.contains($0.user.identifier) })
+        if let permissionError = ensurePermission(.getMemberPermissions, in: team) {
+            return permissionError
+        }
+        
+        let payload: [String : Any] = [
+            "members" : members.map { $0.payload },
+            "hasMore" : false
+        ]
+        
+        return ZMTransportResponse(payload: payload as ZMTransportData, httpStatus: 200, transportSessionError: nil)
+    }
+    
+    private func fetchRolesForTeam(with identifier: String?) -> ZMTransportResponse? {
+        guard let identifier = identifier else { return nil }
+        let predicate = MockTeam.predicateWithIdentifier(identifier: identifier)
+        guard let team: MockTeam = MockTeam.fetch(in: managedObjectContext, withPredicate: predicate) else { return .teamNotFound }
+        
+        let payload: [String : Any] = [
+            "conversation_roles" : team.roles.map { $0.payload }
+        ]
+        
         return ZMTransportResponse(payload: payload as ZMTransportData, httpStatus: 200, transportSessionError: nil)
     }
     

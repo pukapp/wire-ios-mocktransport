@@ -39,6 +39,7 @@
 @dynamic creator;
 @dynamic identifier;
 @dynamic selfIdentifier;
+@dynamic selfRole;
 @dynamic name;
 @dynamic type;
 @dynamic activeUsers;
@@ -53,6 +54,8 @@
 @dynamic accessMode;
 @dynamic link;
 @dynamic receiptMode;
+@dynamic nonTeamRoles;
+@dynamic participantRoles;
 
 + (instancetype)insertConversationIntoContext:(NSManagedObjectContext *)moc withSelfUser:(MockUser *)selfUser creator:(MockUser *)creator otherUsers:(NSArray *)otherUsers type:(ZMTConversationType)type
 {
@@ -184,7 +187,11 @@
         if([activeUser.identifier isEqualToString:self.selfIdentifier]) { // self user should not be in others
             continue;
         }
-        [others addObject:@{ @"id": activeUser.identifier }];
+        MockRole *role = [activeUser roleIn:self];
+        NSString *roleName = role != nil ? role.name : MockRole.adminRole.name;
+        [others addObject:@{ @"id": activeUser.identifier,
+                             @"conversation_role": roleName}];
+        
     }
     
     members[@"others"] = others;
@@ -196,6 +203,7 @@
 {
     NSMutableDictionary *selfInfo = [NSMutableDictionary dictionary];
     selfInfo[@"id"] = self.selfIdentifier;
+    selfInfo[@"conversation_role"] = self.selfRole;
     selfInfo[@"otr_muted_ref"] = self.otrMutedRef ?: [NSNull null];
     selfInfo[@"otr_muted"] = @(self.otrMuted);
     selfInfo[@"otr_muted_status"] = self.otrMutedStatus ?: [NSNull null];

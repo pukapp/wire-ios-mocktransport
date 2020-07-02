@@ -155,8 +155,13 @@ public extension MockTransportSession {
 }
 
 extension MockTransportSession: TransportSessionType {
+    
+    public var requestLoopDetectionCallback: ((String) -> Void)? {
+        set { }
+        get { return nil }
+    }
         
-    public func addCompletionHandlerForBackgroundSession(identifier identifier: String, handler: @escaping () -> Void) {
+    public func addCompletionHandlerForBackgroundSession(identifier: String, handler: @escaping () -> Void) {
         
     }
         

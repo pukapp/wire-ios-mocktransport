@@ -19,6 +19,9 @@
 import Foundation
 
 extension MockConversation {
+    @objc public static let admin = "wire_admin"
+    @objc public static let member = "wire_member"
+
     @objc public static func insertConversationInto(context: NSManagedObjectContext, withCreator creator: MockUser, forTeam team: MockTeam, users:[MockUser]) -> MockConversation {
         let conversation = NSEntityDescription.insertNewObject(forEntityName: "Conversation", into: context) as! MockConversation
         conversation.type = .group
@@ -27,6 +30,23 @@ extension MockConversation {
         conversation.identifier = UUID.create().transportString()
         conversation.creator = creator
         conversation.mutableOrderedSetValue(forKey: #keyPath(MockConversation.activeUsers)).addObjects(from: users)
+        return conversation
+    }
+    
+    @objc(insertConversationWithRolesIntoContext:withCreator:otherUsers:)
+    public static func insertConversationWithRolesInto(context: NSManagedObjectContext, creator: MockUser, otherUsers:[MockUser]) -> MockConversation {
+        let conversation = NSEntityDescription.insertNewObject(forEntityName: "Conversation", into: context) as! MockConversation
+        conversation.type = .group
+        conversation.team = nil
+        conversation.identifier = UUID.create().transportString()
+        conversation.creator = creator
+        conversation.mutableOrderedSetValue(forKey: #keyPath(MockConversation.activeUsers)).addObjects(from: otherUsers)
+        let roles = Set([
+                MockRole.insert(in: context, name: MockConversation.admin, actions: MockTeam.createAdminActions(context: context)),
+                MockRole.insert(in: context, name: MockConversation.member, actions: MockTeam.createMemberActions(context: context))
+            ])
+        conversation.nonTeamRoles = roles
+
         return conversation
     }
 
