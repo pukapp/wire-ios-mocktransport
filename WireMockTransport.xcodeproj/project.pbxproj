@@ -66,6 +66,8 @@
 		7C52BFF82033225500297DDA /* MockReachability.m in Sources */ = {isa = PBXBuildFile; fileRef = 7C52BFF62033225500297DDA /* MockReachability.m */; };
 		872A2EE01FFE761B00900B22 /* MockService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 872A2EDF1FFE761B00900B22 /* MockService.swift */; };
 		872A2EE21FFE7EE700900B22 /* MockTransportSession+Services.swift in Sources */ = {isa = PBXBuildFile; fileRef = 872A2EE11FFE7EE700900B22 /* MockTransportSession+Services.swift */; };
+		A0BA05F724AFA24100187BD0 /* WireTesting.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF0F77911E93ACBE0060494E /* WireTesting.framework */; };
+		A0BA05F824AFA24100187BD0 /* WireTesting.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BF0F77911E93ACBE0060494E /* WireTesting.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		BF0F77831E93AC550060494E /* WireCryptobox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF0F777B1E93AC550060494E /* WireCryptobox.framework */; };
 		BF0F77841E93AC550060494E /* WireProtos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF0F777C1E93AC550060494E /* WireProtos.framework */; };
 		BF0F77851E93AC550060494E /* WireTransport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF0F777D1E93AC550060494E /* WireTransport.framework */; };
@@ -147,6 +149,17 @@
 				BF0F77901E93AC860060494E /* OCMock.framework in CopyFiles */,
 				09E393C91BAC3FA300F3EA1B /* ProtocolBuffers.framework in CopyFiles */,
 			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A0BA05F924AFA24100187BD0 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				A0BA05F824AFA24100187BD0 /* WireTesting.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -287,6 +300,7 @@
 				BF0F77841E93AC550060494E /* WireProtos.framework in Frameworks */,
 				BF0F77851E93AC550060494E /* WireTransport.framework in Frameworks */,
 				BF0F77861E93AC550060494E /* WireUtilities.framework in Frameworks */,
+				A0BA05F724AFA24100187BD0 /* WireTesting.framework in Frameworks */,
 				BF0F77871E93AC550060494E /* WireSystem.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -658,6 +672,7 @@
 				54C9022F1B7532DD007162A8 /* Frameworks */,
 				54C902301B7532DD007162A8 /* Headers */,
 				54C902311B7532DD007162A8 /* Resources */,
+				A0BA05F924AFA24100187BD0 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
